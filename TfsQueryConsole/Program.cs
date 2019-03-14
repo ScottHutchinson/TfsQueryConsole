@@ -6,12 +6,13 @@ using System.IO;
 using Microsoft.TeamFoundation.VersionControl.Client;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Server;
+using System.Threading.Tasks;
 
 namespace TfsQueryConsole {
-    class Program {
+    internal class Program {
 
         // http://blogs.microsoft.co.il/shair/2009/01/13/tfs-api-part-3-get-project-list-using-icommonstructureservice/
-        static ProjectInfo[] GetDefaultProjectInfo(TfsTeamProjectCollection tfs) {
+        private static ProjectInfo[] GetDefaultProjectInfo(TfsTeamProjectCollection tfs) {
             // Create ICommonStructureService object that will take TFS Structure Service.
             ICommonStructureService structureService = (ICommonStructureService)tfs.GetService(typeof(ICommonStructureService));
             // Use ListAllProjects method to get all Team Projects in the TFS.
@@ -22,9 +23,8 @@ namespace TfsQueryConsole {
         /* This function queries the selected TFS project for recent changesets and writes
          * the results, including full, untruncated comments in a .csv file.
         */
-        static void ExportChangesetsWithFullComments(string author, bool sortAscending) {
+        private static void ExportChangesetsWithFullComments(string author, bool sortAscending) {
             const int maxChangesets = 10000;
-            //Uri defaultCollectionURI = new Uri("http://ici-ox-tfs:8080/tfs/DARTCollection");
             Uri defaultCollectionURI = new Uri(ConfigurationManager.AppSettings["defaultCollectionURI"]);
             TeamProjectPicker tpp = new TeamProjectPicker(TeamProjectPickerMode.SingleProject, false);
             var defaultCollection = new TfsTeamProjectCollection(defaultCollectionURI);
@@ -79,10 +79,21 @@ namespace TfsQueryConsole {
             Console.ReadKey(); // Wait for user to press a key
         }
 
-        static void Main(string[] args) {
+        private static async Task MainAsync() {
+            var result = await BuildReport.ReportBuildInfo();
+            Console.WriteLine(result);
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey(); // Wait for user to press a key
+            /* TODO: Enable the user or command line to switch between querying Builds and querying Changesets.
+             * or add a GUI.
+             */
+            //ExportChangesetsWithFullComments(author, sortAscending);
+        }
+
+        public static void Main(string[] args) {
             // For now, assume that arg 0 is the name of the Author to search for, and arg 1 is the sortAscending flag.
             // TODO: Support multiple args in whatever order.
-            // Example: TfsQueryConsole.exe -author:ICI\HutchinsonS -sortAscending:true
+            // Example: TfsQueryConsole.exe -author:gfedev\HutchinsonS -sortAscending:true
             int colonPos = 0;
             string author = null;
             if (args.Length > 0) {
@@ -96,7 +107,7 @@ namespace TfsQueryConsole {
                 colonPos = sortArg.IndexOf(':');
                 bool.TryParse(sortArg.Substring(colonPos + 1), out sortAscending);
             }
-            ExportChangesetsWithFullComments(author, sortAscending);
+            MainAsync().Wait();
         }
     }
 }
