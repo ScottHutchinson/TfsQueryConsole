@@ -38,7 +38,7 @@ namespace TfsQueryConsole {
         private static string ProcessBuilds(List<Build> targetedBuilds) {
             var pathString = $@"BuildResults.csv";
             var stringBuilder = new StringBuilder();
-            stringBuilder.AppendLine("Name, Date, Passed, Build Time, Queue Time");
+            stringBuilder.AppendLine("Name,Date,Passed,Build Time,Queue Time");
             foreach (var build in targetedBuilds) {
                 var buildInfo = new BuildInfo {
                     Name = build.BuildNumber,
@@ -81,7 +81,7 @@ namespace TfsQueryConsole {
         }
 
         public override string ToString() {
-            return $"{this.Name}, {this.Started.ToLocalTime():g}, {this.Passed}, {this.TimeRanInMinutes}, {this.InQueueTimeMinutes}";
+            return $"{this.Name},{this.Started.ToLocalTime():g},{this.Passed},{this.TimeRanInMinutes},{this.InQueueTimeMinutes}";
         }
     }
 }

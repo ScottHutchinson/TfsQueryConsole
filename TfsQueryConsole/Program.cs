@@ -75,31 +75,45 @@ namespace TfsQueryConsole {
                 }
             }
             Console.WriteLine("{0:N0} rows written to {1}\r\n", rowsReturned, outputPath);
-            Console.WriteLine("Press any key to exit...", outputPath);
-            Console.ReadKey(); // Wait for user to press a key
         }
 
-        private static async Task MainAsync() {
-            var result = await BuildReport.ReportBuildInfo();
+        enum QueryType {
+            BuildReport,
+            Changesets
+        }
+
+        private static async Task MainAsync(QueryType queryType, string author = null, bool sortAscending = false) {
+            string result = "";
+            switch (queryType) {
+                case QueryType.BuildReport:
+                    result = await BuildReport.ReportBuildInfo();
+                    break;
+                case QueryType.Changesets:
+                    ExportChangesetsWithFullComments(author, sortAscending);
+                    break;
+            }
             Console.WriteLine(result);
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(); // Wait for user to press a key
-            /* TODO: Enable the user or command line to switch between querying Builds and querying Changesets.
-             * or add a GUI.
-             */
-            //ExportChangesetsWithFullComments(author, sortAscending);
         }
 
         public static void Main(string[] args) {
             // For now, assume that arg 0 is the name of the Author to search for, and arg 1 is the sortAscending flag.
             // TODO: Support multiple args in whatever order.
             // Example: TfsQueryConsole.exe -author:gfedev\HutchinsonS -sortAscending:true
+            // Example for Build Report: TfsQueryConsole.exe -build
             int colonPos = 0;
             string author = null;
+            QueryType queryType = QueryType.Changesets;
             if (args.Length > 0) {
-                var authorArg = args[0];
-                colonPos = authorArg.IndexOf(':');
-                author = authorArg.Substring(colonPos + 1);
+                var arg0 = args[0];
+                if (arg0.StartsWith("-build")) {
+                    queryType = QueryType.BuildReport;
+                }
+                else {
+                    colonPos = arg0.IndexOf(':');
+                    author = arg0.Substring(colonPos + 1);
+                }
             }
             bool sortAscending = false;
             if (args.Length > 1) {
@@ -107,7 +121,7 @@ namespace TfsQueryConsole {
                 colonPos = sortArg.IndexOf(':');
                 bool.TryParse(sortArg.Substring(colonPos + 1), out sortAscending);
             }
-            MainAsync().Wait();
+            MainAsync(queryType, author, sortAscending).Wait();
         }
     }
 }
